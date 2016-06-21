@@ -1,0 +1,7 @@
+name: Workbench Moderation Annotation
+type: module
+description: Provides the ability to annotate elements of a moderated Entity.
+core: 8.x
+package: Other
+dependencies:
+  - workbench_moderation

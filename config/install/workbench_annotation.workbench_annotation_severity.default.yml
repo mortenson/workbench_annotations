@@ -1,0 +1,4 @@
+id: default
+label: Default
+color: FFFFFF
+blocked_moderation_states: { }

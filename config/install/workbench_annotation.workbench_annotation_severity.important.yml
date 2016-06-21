@@ -1,0 +1,7 @@
+id: important
+label: Important
+color: FFCC00
+blocked_moderation_states:
+ - needs_review_published
+ - draft_published
+ - archived_published

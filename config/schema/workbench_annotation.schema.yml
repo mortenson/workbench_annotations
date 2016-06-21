@@ -1,0 +1,18 @@
+workbench_annotation.workbench_annotation_severity.*:
+  type: config_entity
+  label: 'Workbench annotation severity'
+  mapping:
+    id:
+      type: string
+      label: 'ID'
+    label:
+      type: label
+      label: 'Label'
+    color:
+      type: string
+      label: 'Severity color'
+    blocked_moderation_states:
+      type: sequence
+      sequence:
+        type: string
+        label: 'Blocked moderation states'

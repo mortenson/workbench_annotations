@@ -1,0 +1,31 @@
+workbench_annotation.annotation.create:
+  path: '/admin/workbench_annotation/annotations'
+  defaults:
+    _controller: '\Drupal\workbench_annotation\Controller\WorkbenchAnnotationController::createAnnotation'
+  requirements:
+    _permission: 'create workbench annotations'
+    _method: 'POST'
+
+workbench_annotation.annotation.update:
+  path: '/admin/workbench_annotation/annotations/{workbench_annotation}'
+  defaults:
+    _controller: '\Drupal\workbench_annotation\Controller\WorkbenchAnnotationController::updateAnnotation'
+  requirements:
+    _permission: 'create workbench annotations'
+    _method: 'PUT'
+
+workbench_annotation.annotation.delete:
+  path: '/admin/workbench_annotation/annotations/{workbench_annotation}'
+  defaults:
+    _controller: '\Drupal\workbench_annotation\Controller\WorkbenchAnnotationController::deleteAnnotation'
+  requirements:
+    _permission: 'create workbench annotations'
+    _method: 'DELETE'
+
+workbench_annotation.annotation.search:
+  path: '/admin/workbench_annotation/annotations'
+  defaults:
+    _controller: '\Drupal\workbench_annotation\Controller\WorkbenchAnnotationController::searchAnnotations'
+  requirements:
+    _permission: 'create workbench annotations'
+    _method: 'GET'

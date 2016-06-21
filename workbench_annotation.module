@@ -1,0 +1,49 @@
+<?php
+
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+
+
+/**
+ * Implements hook_page_attachments().
+ */
+function workbench_annotation_page_attachments(array &$page) {
+  if (!\Drupal::currentUser()->hasPermission('access workbench annotations')
+    || \Drupal::service('router.admin_context')->isAdminRoute()) {
+    return;
+  }
+
+  $page['#attached']['library'][] = 'workbench_annotation/main';
+}
+
+/**
+ * Implements hook_entity_view_alter().
+ */
+function workbench_annotation_entity_view_alter(&$build, EntityInterface $entity, EntityViewDisplayInterface $display) {
+  $build['#cache']['contexts'][] = 'user.permissions';
+
+  if (!_workbench_annotation_access($entity)) {
+    return;
+  }
+
+  $build['#attributes']['data-workbench-annotation-entity-id'] = $entity->getEntityTypeId() . '/' . $entity->id();
+}
+
+/**
+ * Access callback to determine if an Entity can be annotated.
+ *
+ * @param \Drupal\Core\Entity\EntityInterface $entity
+ *   The Entity to check.
+ *
+ * @return bool
+ *   TRUE if the current user can access the Entity, FALSE otherwise.
+ */
+function _workbench_annotation_access(EntityInterface $entity) {
+  /** @var \Drupal\workbench_moderation\ModerationInformation $workbench_information */
+  $workbench_information = \Drupal::service('workbench_moderation.moderation_information');
+
+  // Check if this is the latest moderated revision and if the user has access.
+  return \Drupal::currentUser()->hasPermission('access workbench annotations')
+  && $workbench_information->isModeratableEntity($entity)
+  && $workbench_information->isLatestRevision($entity);
+}

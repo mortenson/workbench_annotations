@@ -1,0 +1,20 @@
+main:
+  version: VERSION
+  js:
+    js/main.js: {}
+  css:
+    component:
+      css/main.css: {}
+  dependencies:
+    - core/drupal
+    - core/jquery
+    - core/jquery.once
+    - workbench_annotation/annotator
+
+annotator:
+  version: VERSION
+  js:
+    /libraries/annotator/annotator-full.min.js: {}
+  css:
+    component:
+      /libraries/annotator/annotator.min.css: {}
