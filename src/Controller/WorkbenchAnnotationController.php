@@ -41,28 +41,49 @@ class WorkbenchAnnotationController extends ControllerBase {
     );
   }
 
-  public function createAnnotation(Request $request) {
+  protected function getJSON(Request $request) {
     $content = $request->getContent();
     if (!empty($content)) {
-      if (!$data = json_decode($content, true)) {
+      if (!$data = json_decode($content, TRUE)) {
         throw new BadRequestHttpException('Unable to decode JSON.');
       }
-
-      $annotation = WorkbenchAnnotation::create($data);
-      $annotation->save();
-      $data['id'] = $annotation->id();
-      return new JsonResponse($data);
     }
     else {
       throw new BadRequestHttpException('Request content is empty.');
     }
+
+    if (isset($data['severity']) && $data['severity'] == 'default') {
+      unset($data['severity']);
+    }
+
+    return $data;
   }
 
-  public function updateAnnotation($annotation) {
-    return new JsonResponse();
+  public function createAnnotation(Request $request) {
+    $data = $this->getJSON($request);
+    /** @var \Drupal\workbench_annotation\Entity\WorkbenchAnnotation $annotation */
+    $annotation = WorkbenchAnnotation::create($data);
+    $annotation->save();
+    $data = $this->getAnnotatorJSData($annotation);
+    return new JsonResponse($data);
   }
 
-  public function deleteAnnotation($annotation) {
+  public function readAnnotation(WorkbenchAnnotation $workbench_annotation) {
+    $data = $this->getAnnotatorJSData($workbench_annotation);
+    return new JsonResponse($data);
+  }
+
+  public function updateAnnotation(WorkbenchAnnotation $workbench_annotation, Request $request) {
+    $data = $this->getJSON($request);
+    $workbench_annotation->set('text', $data['text']);
+    $workbench_annotation->set('severity', $data['severity']);
+    $workbench_annotation->save();
+    $data = $this->getAnnotatorJSData($workbench_annotation);
+    return new JsonResponse($data);
+  }
+
+  public function deleteAnnotation(WorkbenchAnnotation $workbench_annotation) {
+    $workbench_annotation->delete();
     return new JsonResponse();
   }
 
@@ -75,39 +96,49 @@ class WorkbenchAnnotationController extends ControllerBase {
     $annotations = WorkbenchAnnotation::loadMultiple($result);
     /** @var \Drupal\workbench_annotation\Entity\WorkbenchAnnotation $annotation */
     foreach ($annotations as $annotation) {
-      /** @var \Drupal\user\Entity\User $author */
-      $author = $annotation->get('author')->referencedEntities()[0];
-      /** @var \Drupal\Core\File\FileSystem $file_system */
-      if ($author->hasField('user_picture')) {
-        /** @var \Drupal\image\Plugin\Field\FieldType\ImageItem $user_picture */
-        $user_picture = $author->get('user_picture')->get(0);
-        $image_path = $user_picture->entity->getFileUri();
-      }
-      else {
-        $image_path = drupal_get_path('module', 'workbench_annotation') . '/images/account.svg';
-      }
-      $image_src = file_create_url($image_path);
-      $created = date('F jS, Y', $annotation->get('created')->getString());
-      $data = [
-        'id' => $annotation->id(),
-        'author_image' => $image_src,
-        'author_name' => $author->getDisplayName(),
-        'created' => $created,
-        'quote' => $annotation->get('quote')->getString(),
-        'ranges' => $annotation->get('ranges')->getValue(),
-        'text' => $annotation->get('text')->getString()
-      ];
-      foreach ($data as $key => $value) {
-        if (is_string($data[$key])) {
-          $data[$key] = filter_var($value, FILTER_SANITIZE_STRING);
-        }
-      }
-      $rows[] = $data;
+      $rows[] = $this->getAnnotatorJSData($annotation);
     }
     return new JsonResponse([
       'rows' => $rows,
       'total' => count($rows)
     ]);
+  }
+
+  protected function getAnnotatorJSData(WorkbenchAnnotation $workbench_annotation) {
+    /** @var \Drupal\user\Entity\User $author */
+    $author = $workbench_annotation->get('author')->referencedEntities()[0];
+    /** @var \Drupal\Core\File\FileSystem $file_system */
+    if ($author->hasField('user_picture')) {
+      /** @var \Drupal\image\Plugin\Field\FieldType\ImageItem $user_picture */
+      $user_picture = $author->get('user_picture')->get(0);
+      if ($user_picture) {
+        $image_path = $user_picture->entity->getFileUri();
+      }
+    }
+
+    if (!isset($image_path)) {
+      $image_path = drupal_get_path('module', 'workbench_annotation') . '/images/account.svg';
+    }
+
+    $image_src = file_create_url($image_path);
+    $created = date('F jS, Y', $workbench_annotation->get('created')->getString());
+    $data = [
+      'id' => $workbench_annotation->id(),
+      'author_image' => $image_src,
+      'author_name' => $author->getDisplayName(),
+      'created' => $created,
+      'quote' => $workbench_annotation->get('quote')->getString(),
+      'ranges' => $workbench_annotation->get('ranges')->getValue(),
+      'text' => $workbench_annotation->get('text')->getString(),
+      'severity' => $workbench_annotation->get('severity')->getString()
+    ];
+    foreach ($data as $key => $value) {
+      if (is_string($data[$key])) {
+        $data[$key] = filter_var($value, FILTER_SANITIZE_STRING);
+      }
+    }
+
+    return $data;
   }
 
 }

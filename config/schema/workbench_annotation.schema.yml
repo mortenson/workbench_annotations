@@ -8,11 +8,11 @@ workbench_annotation.workbench_annotation_severity.*:
     label:
       type: label
       label: 'Label'
-    color:
+    severity_level:
       type: string
-      label: 'Severity color'
-    blocked_moderation_states:
+      label: 'Severity level'
+    blocked_moderation_transitions:
       type: sequence
       sequence:
         type: string
-        label: 'Blocked moderation states'
+        label: 'Blocked moderation transitions'

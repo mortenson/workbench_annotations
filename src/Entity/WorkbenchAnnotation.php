@@ -7,6 +7,7 @@ use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\workbench_annotation\WorkbenchAnnotationInterface;
 
 /**
  * Defines the workbench_annotation entity.
@@ -15,9 +16,7 @@ use Drupal\field\Entity\FieldStorageConfig;
  *   id = "workbench_annotation",
  *   label = @Translation("Workbench annotation"),
  *   handlers = {
- *     "view_builder" = "Drupal\Core\Entity\EntityViewBuilder",
- *     "views_data" = "Drupal\views\EntityViewsData",
- *     "access" = "Drupal\workbench_annotation\AccessControlHandler",
+ *     "access" = "Drupal\workbench_annotation\AccessControlHandler"
  *   },
  *   base_table = "workbench_annotation",
  *   admin_permission = "administer workbench_annotation entity",
@@ -99,10 +98,6 @@ class WorkbenchAnnotation extends ContentEntityBase {
       ->setLabel(t('Created'))
       ->setDescription(t('The time that the entity was created.'))
       ->setRequired(TRUE);
-
-    $fields['resolved'] = BaseFieldDefinition::create('boolean')
-      ->setLabel(t('Resolved'))
-      ->setDescription(t('Whether or not the annotation is resolved.'));
 
     $fields['severity'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('Severity'))

@@ -37,17 +37,17 @@ class WorkbenchAnnotationSeverity extends ConfigEntityBase {
   protected $label;
 
   /**
-   * The severity color, in hex.
+   * The severity level, which can be used to visually modify the annotation.
    *
    * @var string
    */
-  protected $color;
+  protected $severity_level;
 
   /**
-   * The blocked moderation states.
+   * The blocked moderation transitions.
    *
    * @var array
    */
-  protected $blocked_moderation_states = [];
+  protected $blocked_moderation_transitions = [];
 
 }

@@ -2,8 +2,9 @@
 
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\workbench_annotation\Entity\WorkbenchAnnotation;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\workbench_annotation\Entity\WorkbenchAnnotationSeverity;
-
 
 /**
  * Implements hook_page_attachments().
@@ -15,9 +16,24 @@ function workbench_annotation_page_attachments(array &$page) {
   }
 
   $page['#attached']['library'][] = 'workbench_annotation/main';
+
+  $options = [];
+  /** @var \Drupal\workbench_annotation\Entity\WorkbenchAnnotationSeverity[] $severities */
   $severities = WorkbenchAnnotationSeverity::loadMultiple();
+  $options['default'] = [
+    'id' => 'default',
+    'severity_level' => 'default',
+    'label' => 'Default',
+  ];
+  foreach ($severities as $severity_id => $severity) {
+    $options[$severity_id] = [
+      'id' => $severity->id(),
+      'severity_level' => $severity->get('severity_level'),
+      'label' => $severity->label(),
+    ];
+  }
   $page['#attached']['drupalSettings']['workbench_annotation'] = [
-    'severities' => ['default' => 'Default', 'important' => 'Important']
+    'severities' => $options,
   ];
 }
 
@@ -50,5 +66,62 @@ function _workbench_annotation_access(EntityInterface $entity) {
   // Check if this is the latest moderated revision and if the user has access.
   return \Drupal::currentUser()->hasPermission('access workbench annotations')
   && $workbench_information->isModeratableEntity($entity)
-  && $workbench_information->isLatestRevision($entity);
+  && $workbench_information->isLatestRevision($entity)
+  && !$entity->isNew();
+}
+
+function workbench_annotation_form_node_form_alter(&$form, FormStateInterface $form_state) {
+  $workbench_information = \Drupal::service('workbench_moderation.moderation_information');
+
+  if ($workbench_information->isModeratedEntityForm($form_state->getFormObject())) {
+    /* @var \Drupal\Core\Entity\ContentEntityInterface $entity */
+    $entity = $form_state->getFormObject()->getEntity();
+    if (_workbench_annotation_access($entity)) {
+      $form['#validate'][] = 'workbench_annotation_node_form_validate';
+    }
+  }
+}
+
+function workbench_annotation_node_form_validate(&$form, FormStateInterface $form_state) {
+  /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
+  $entity = $form_state->getFormObject()->getEntity();
+  $element = $form_state->getTriggeringElement();
+
+  /** @var \Drupal\workbench_moderation\StateTransitionValidation $transition_validation */
+  $transition_validation = \Drupal::service('workbench_moderation.state_transition_validation');
+  $transitions = $transition_validation->getValidTransitions($entity, \Drupal::currentUser());
+
+  // Exclude self-transitions.
+  $from_state = $entity->moderation_state->entity->id();
+  $to_state = $element['#moderation_state'];
+  $current_transition = FALSE;
+  foreach ($transitions as $transition) {
+    if ($transition->getToState() == $to_state && $transition->getFromState() == $from_state) {
+      $current_transition = $transition;
+    }
+  }
+
+  if (!$current_transition) {
+    return;
+  }
+
+  $result = \Drupal::entityQuery('workbench_annotation')
+    ->condition('entity_type', $entity->getEntityTypeId())
+    ->condition('entity_id', $entity->id())
+    ->execute();
+  $annotations = WorkbenchAnnotation::loadMultiple($result);
+
+  /** @var \Drupal\workbench_annotation\Entity\WorkbenchAnnotation $annotation */
+  foreach ($annotations as $annotation) {
+    $severity_id = $annotation->get('severity')->getString();
+    $severity = WorkbenchAnnotationSeverity::load($severity_id);
+    if ($severity) {
+      foreach ($severity->get('blocked_moderation_transitions') as $transition) {
+        if ($current_transition->id() == $transition) {
+          $form_state->setErrorByName('blocked_moderation_transition', t('You cannot @label until you resolve all important annotations.', ['@label' => $current_transition->label()]));
+        }
+      }
+    }
+  }
+
 }

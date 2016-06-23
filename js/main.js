@@ -19,6 +19,7 @@
       var self = this;
       this.annotator
         .subscribe('beforeAnnotationCreated', function (annotation) {
+          annotation.severity = self.severity;
           annotation.entity_type = self.entity_type;
           annotation.entity_id = self.entity_id;
         })
@@ -26,6 +27,13 @@
           var quote = $(field).html();
           $(field).html('');
           $(field).addClass('workbench-annotator-annotation');
+          var $widget = $(field).closest('.annotator-widget');
+          $widget.removeClass(function (index, css) {
+            return (css.match (/(^|\s)severity-\S+/g) || []).join(' ');
+          });
+          if (annotation.severity) {
+            $widget.addClass('severity-' + annotation.severity);
+          }
           $(field).append(
             '<div class="author-info">' +
             '  <img class="author-image" src="' + annotation.author_image + '" width="50" height="50"/>' +
@@ -43,12 +51,19 @@
           var $element = editor.element;
           $element.once('workbench-annotator-form-extras').each(function () {
             var $select = $('<select>').addClass('workbench-annotator-severity');
-            for (var type in drupalSettings.workbench_annotation.severities) {
-              var label = drupalSettings.workbench_annotation.severities[type];
-              $select.append('<option value="' + type + '">' + label + '</option>');
+            for (var id in drupalSettings.workbench_annotation.severities) {
+              var label = drupalSettings.workbench_annotation.severities[id].label;
+              $select.append('<option value="' + id + '">' + label + '</option>');
             }
             $element.find('.annotator-controls').prepend($select);
+            if (annotation.severity) {
+              $select.val(annotation.severity).change();
+            }
           });
+        })
+        .subscribe('annotationEditorSubmit', function (editor, annotation) {
+          var $element = editor.element;
+          annotation.severity = $element.find('.workbench-annotator-severity').val();
         });
     }
   });
