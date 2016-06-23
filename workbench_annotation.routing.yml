@@ -23,7 +23,7 @@ workbench_annotation.annotation.delete:
     _method: 'DELETE'
 
 workbench_annotation.annotation.search:
-  path: '/admin/workbench_annotation/annotations'
+  path: '/admin/workbench_annotation/search'
   defaults:
     _controller: '\Drupal\workbench_annotation\Controller\WorkbenchAnnotationController::searchAnnotations'
   requirements:

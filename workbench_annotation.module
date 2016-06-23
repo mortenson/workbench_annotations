@@ -2,6 +2,7 @@
 
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\workbench_annotation\Entity\WorkbenchAnnotationSeverity;
 
 
 /**
@@ -14,6 +15,10 @@ function workbench_annotation_page_attachments(array &$page) {
   }
 
   $page['#attached']['library'][] = 'workbench_annotation/main';
+  $severities = WorkbenchAnnotationSeverity::loadMultiple();
+  $page['#attached']['drupalSettings']['workbench_annotation'] = [
+    'severities' => ['default' => 'Default', 'important' => 'Important']
+  ];
 }
 
 /**

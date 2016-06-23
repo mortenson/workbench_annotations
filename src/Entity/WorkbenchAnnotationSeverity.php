@@ -10,7 +10,7 @@ use Drupal\Core\Config\Entity\ConfigEntityBase;
  * @ConfigEntityType(
  *   id = "workbench_annotation_severity",
  *   label = @Translation("Workbench annotation severity"),
- *   config_prefix = "moderation_state",
+ *   config_prefix = "workbench_annotation_severity",
  *   admin_permission = "administer workbench annotation severities",
  *   entity_keys = {
  *     "id" = "id",

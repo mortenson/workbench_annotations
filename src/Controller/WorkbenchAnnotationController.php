@@ -66,19 +66,48 @@ class WorkbenchAnnotationController extends ControllerBase {
     return new JsonResponse();
   }
 
-  public function searchAnnotations() {
-    $data = [];
-    $annotations = WorkbenchAnnotation::loadMultiple();
+  public function searchAnnotations(Request $request) {
+    $rows = [];
+    $result = \Drupal::entityQuery('workbench_annotation')
+      ->condition('entity_type', $request->get('entity_type'))
+      ->condition('entity_id', $request->get('entity_id'))
+      ->execute();
+    $annotations = WorkbenchAnnotation::loadMultiple($result);
     /** @var \Drupal\workbench_annotation\Entity\WorkbenchAnnotation $annotation */
     foreach ($annotations as $annotation) {
-      $data[] = [
+      /** @var \Drupal\user\Entity\User $author */
+      $author = $annotation->get('author')->referencedEntities()[0];
+      /** @var \Drupal\Core\File\FileSystem $file_system */
+      if ($author->hasField('user_picture')) {
+        /** @var \Drupal\image\Plugin\Field\FieldType\ImageItem $user_picture */
+        $user_picture = $author->get('user_picture')->get(0);
+        $image_path = $user_picture->entity->getFileUri();
+      }
+      else {
+        $image_path = drupal_get_path('module', 'workbench_annotation') . '/images/account.svg';
+      }
+      $image_src = file_create_url($image_path);
+      $created = date('F jS, Y', $annotation->get('created')->getString());
+      $data = [
         'id' => $annotation->id(),
+        'author_image' => $image_src,
+        'author_name' => $author->getDisplayName(),
+        'created' => $created,
         'quote' => $annotation->get('quote')->getString(),
         'ranges' => $annotation->get('ranges')->getValue(),
         'text' => $annotation->get('text')->getString()
       ];
+      foreach ($data as $key => $value) {
+        if (is_string($data[$key])) {
+          $data[$key] = filter_var($value, FILTER_SANITIZE_STRING);
+        }
+      }
+      $rows[] = $data;
     }
-    return new JsonResponse($data);
+    return new JsonResponse([
+      'rows' => $rows,
+      'total' => count($rows)
+    ]);
   }
 
 }

@@ -1,0 +1,49 @@
+.workbench-annotator-annotation {
+
+}
+
+.workbench-annotator-annotation .author-info {
+  float: left;
+  text-align: center;
+}
+
+.workbench-annotator-annotation .annotation-info {
+  float: left;
+  text-align: center;
+}
+
+.workbench-annotator-annotation .author-info .author-image,.author-name {
+  display: block;
+  text-align: center;
+}
+
+.workbench-annotator-annotation .author-info {
+  margin-right: 10px;
+}
+
+.workbench-annotator-annotation .author-info .author-image {
+  margin-bottom: 10px;
+  border-radius: 50%;
+}
+
+.workbench-annotator-annotation .created-date {
+  margin-bottom: 5px;
+}
+
+.workbench-annotator-annotation .annotator-quote {
+  font-style: normal;
+  color: #6b6b6b;
+}
+
+.workbench-annotator-severity {
+  position: relative;
+  display: inline-block;
+  height: 26px;
+  color: #363636;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.75);
+  text-decoration: none;
+  line-height: 24px;
+  font-size: 12px;
+  font-weight: bold;
+  border: 1px solid #a2a2a2;
+}

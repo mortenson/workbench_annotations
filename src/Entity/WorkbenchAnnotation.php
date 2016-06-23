@@ -39,7 +39,6 @@ class WorkbenchAnnotation extends ContentEntityBase {
     parent::preCreate($storage_controller, $values);
     $values += array(
       'author' => \Drupal::currentUser()->id(),
-      'created' => REQUEST_TIME,
     );
   }
 
