@@ -2,5 +2,7 @@ access workbench annotations:
   title: 'Access Workbench Annotations'
 create workbench annotations:
   title: 'Create Workbench Annotations'
+administer workbench annotations:
+  title: 'Administer Workbench Annotations'
 administer workbench annotation severities:
   title: 'Administer Workbench Annotation Severities'

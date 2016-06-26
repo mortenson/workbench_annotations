@@ -4,6 +4,7 @@ namespace Drupal\workbench_annotation\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\workbench_annotation\Entity\WorkbenchAnnotation;
+use Drupal\workbench_annotation\WorkbenchAnnotationInterface;
 use Drupal\workbench_moderation\ModerationInformation;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -41,6 +42,18 @@ class WorkbenchAnnotationController extends ControllerBase {
     );
   }
 
+  /**
+   * Attempts to parse a request's content as JSON.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The current request object.
+   *
+   * @return array
+   *   The parsed JSON as an associative array.
+   *
+   * @throws \Symfony\Component\HttpKernel\Exception\BadRequestHttpException
+   *   Thrown if the request does not contain valid JSON.
+   */
   protected function getJSON(Request $request) {
     $content = $request->getContent();
     if (!empty($content)) {
@@ -52,51 +65,110 @@ class WorkbenchAnnotationController extends ControllerBase {
       throw new BadRequestHttpException('Request content is empty.');
     }
 
-    if (isset($data['severity']) && $data['severity'] == 'default') {
-      unset($data['severity']);
-    }
-
     return $data;
   }
 
+  /**
+   * Create (POST) endpoint for AnnotatorJS.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The current request object.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   A JSON response containing valid AnnotatorJS data.
+   */
   public function createAnnotation(Request $request) {
     $data = $this->getJSON($request);
     /** @var \Drupal\workbench_annotation\Entity\WorkbenchAnnotation $annotation */
-    $annotation = WorkbenchAnnotation::create($data);
+    $annotation = WorkbenchAnnotation::create();
+    $annotation->setRanges($data['ranges']);
+    $annotation->setAnnotatedEntityById($data['entity_type'], $data['entity_id']);
+    $annotation->setQuote($data['quote']);
+    $annotation->setText($data['text']);
+    $annotation->setSeverityId($data['severity']);
     $annotation->save();
-    $data = $this->getAnnotatorJSData($annotation);
-    return new JsonResponse($data);
+    $return = $this->getAnnotatorJSData($annotation);
+    return new JsonResponse($return);
   }
 
-  public function readAnnotation(WorkbenchAnnotation $workbench_annotation) {
+  /**
+   * Read (GET) endpoint for AnnotatorJS.
+   *
+   * @param \Drupal\workbench_annotation\WorkbenchAnnotationInterface $workbench_annotation
+   *   The requested annotation.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   A JSON response containing valid AnnotatorJS data.
+   */
+  public function readAnnotation(WorkbenchAnnotationInterface $workbench_annotation) {
     $data = $this->getAnnotatorJSData($workbench_annotation);
     return new JsonResponse($data);
   }
 
-  public function updateAnnotation(WorkbenchAnnotation $workbench_annotation, Request $request) {
+  /**
+   * Update (PUT) endpoint for AnnotatorJS.
+   *
+   * @param \Drupal\workbench_annotation\WorkbenchAnnotationInterface $workbench_annotation
+   *   The requested annotation.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The current request object.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   A JSON response containing valid AnnotatorJS data.
+   */
+  public function updateAnnotation(WorkbenchAnnotationInterface $workbench_annotation, Request $request) {
     $data = $this->getJSON($request);
-    $workbench_annotation->set('text', $data['text']);
-    $workbench_annotation->set('severity', $data['severity']);
+    $workbench_annotation->setText($data['text']);
+    $workbench_annotation->setSeverityId($data['severity']);
     $workbench_annotation->save();
     $data = $this->getAnnotatorJSData($workbench_annotation);
     return new JsonResponse($data);
   }
 
-  public function deleteAnnotation(WorkbenchAnnotation $workbench_annotation) {
+  /**
+   * Delete (DELETE) endpoint for AnnotatorJS.
+   *
+   * @param \Drupal\workbench_annotation\WorkbenchAnnotationInterface $workbench_annotation
+   *   The requested annotation.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   An empty JSON response. Could be anything returning a 200 response.
+   */
+  public function deleteAnnotation(WorkbenchAnnotationInterface $workbench_annotation) {
     $workbench_annotation->delete();
     return new JsonResponse();
   }
 
+  /**
+   * Search endpoint for AnnotatorJS.
+   *
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The current request object.
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   A JSON response that's consumable by AnnotatorJS.
+   *
+   * @throws \Symfony\Component\HttpKernel\Exception\BadRequestHttpException
+   *   Thrown if the query contains invalid keys for entity_type or entity_id.
+   */
   public function searchAnnotations(Request $request) {
+    $entity_type = $request->query->get('entity_type');
+    $entity_id = $request->query->get('entity_id');
+    if (!is_string($entity_type) || !is_numeric($entity_id)) {
+      throw new BadRequestHttpException('Invalid GET parameters sent.');
+    }
+
     $rows = [];
     $result = \Drupal::entityQuery('workbench_annotation')
-      ->condition('entity_type', $request->get('entity_type'))
-      ->condition('entity_id', $request->get('entity_id'))
+      ->condition('entity_type', $entity_type)
+      ->condition('entity_id', $entity_id)
       ->execute();
     $annotations = WorkbenchAnnotation::loadMultiple($result);
     /** @var \Drupal\workbench_annotation\Entity\WorkbenchAnnotation $annotation */
     foreach ($annotations as $annotation) {
-      $rows[] = $this->getAnnotatorJSData($annotation);
+      if ($annotation->access('view')) {
+        $rows[] = $this->getAnnotatorJSData($annotation);
+      }
     }
     return new JsonResponse([
       'rows' => $rows,
@@ -104,39 +176,34 @@ class WorkbenchAnnotationController extends ControllerBase {
     ]);
   }
 
-  protected function getAnnotatorJSData(WorkbenchAnnotation $workbench_annotation) {
-    /** @var \Drupal\user\Entity\User $author */
-    $author = $workbench_annotation->get('author')->referencedEntities()[0];
-    /** @var \Drupal\Core\File\FileSystem $file_system */
-    if ($author->hasField('user_picture')) {
-      /** @var \Drupal\image\Plugin\Field\FieldType\ImageItem $user_picture */
-      $user_picture = $author->get('user_picture')->get(0);
-      if ($user_picture) {
-        $image_path = $user_picture->entity->getFileUri();
-      }
-    }
-
-    if (!isset($image_path)) {
-      $image_path = drupal_get_path('module', 'workbench_annotation') . '/images/account.svg';
-    }
-
-    $image_src = file_create_url($image_path);
+  /**
+   * Parses a given annotation into data that's consumable by AnnotatorJS.
+   *
+   * @param \Drupal\workbench_annotation\WorkbenchAnnotationInterface $workbench_annotation
+   *   The requested annotation.
+   *
+   * @return array
+   *   An associative array containing keys that AnnotatorJS can parse.
+   */
+  protected function getAnnotatorJSData(WorkbenchAnnotationInterface $workbench_annotation) {
     $created = date('F jS, Y', $workbench_annotation->get('created')->getString());
+
     $data = [
       'id' => $workbench_annotation->id(),
-      'author_image' => $image_src,
-      'author_name' => $author->getDisplayName(),
+      'author_image' => $workbench_annotation->getAuthorImageUrl(),
+      'author_name' => $workbench_annotation->getAuthorName(),
       'created' => $created,
-      'quote' => $workbench_annotation->get('quote')->getString(),
-      'ranges' => $workbench_annotation->get('ranges')->getValue(),
-      'text' => $workbench_annotation->get('text')->getString(),
-      'severity' => $workbench_annotation->get('severity')->getString()
+      'quote' => $workbench_annotation->getQuote(),
+      'ranges' => $workbench_annotation->getRanges(),
+      'text' => $workbench_annotation->getText(),
+      'severity' => $workbench_annotation->getSeverityId(),
+      'access' => [
+        'create' => $workbench_annotation->access('create'),
+        'view' => $workbench_annotation->access('view'),
+        'update' => $workbench_annotation->access('update'),
+        'delete' => $workbench_annotation->access('delete'),
+      ]
     ];
-    foreach ($data as $key => $value) {
-      if (is_string($data[$key])) {
-        $data[$key] = filter_var($value, FILTER_SANITIZE_STRING);
-      }
-    }
 
     return $data;
   }

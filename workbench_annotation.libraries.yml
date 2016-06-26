@@ -9,6 +9,7 @@ main:
     - core/drupal
     - core/jquery
     - core/jquery.once
+    - core/underscore
     - workbench_annotation/annotator
 
 annotator:

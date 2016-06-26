@@ -70,6 +70,15 @@ function _workbench_annotation_access(EntityInterface $entity) {
   && !$entity->isNew();
 }
 
+/**
+ * Adds a custom validation callback for Nodes that are moderated, so that we
+ * can block Workbench transitions.
+ *
+ * @param array $form
+ *   The form array.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The form state.
+ */
 function workbench_annotation_form_node_form_alter(&$form, FormStateInterface $form_state) {
   $workbench_information = \Drupal::service('workbench_moderation.moderation_information');
 
@@ -82,6 +91,16 @@ function workbench_annotation_form_node_form_alter(&$form, FormStateInterface $f
   }
 }
 
+/**
+ * Validation callback for moderated Node forms. Checks if there are any
+ * annotations that block the current Workbench transition, and stops the form
+ * submit if so.
+ *
+ * @param array $form
+ *   The form array.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *  The form state.
+ */
 function workbench_annotation_node_form_validate(&$form, FormStateInterface $form_state) {
   /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
   $entity = $form_state->getFormObject()->getEntity();
@@ -91,7 +110,7 @@ function workbench_annotation_node_form_validate(&$form, FormStateInterface $for
   $transition_validation = \Drupal::service('workbench_moderation.state_transition_validation');
   $transitions = $transition_validation->getValidTransitions($entity, \Drupal::currentUser());
 
-  // Exclude self-transitions.
+  // Determine the current transition object based on the from and to states.
   $from_state = $entity->moderation_state->entity->id();
   $to_state = $element['#moderation_state'];
   $current_transition = FALSE;
@@ -101,19 +120,23 @@ function workbench_annotation_node_form_validate(&$form, FormStateInterface $for
     }
   }
 
+  // Something went wrong, return early before running into errors.
   if (!$current_transition) {
     return;
   }
 
+  // Load all annotations associated with this Entity.
   $result = \Drupal::entityQuery('workbench_annotation')
     ->condition('entity_type', $entity->getEntityTypeId())
     ->condition('entity_id', $entity->id())
     ->execute();
+  /** @var \Drupal\workbench_annotation\Entity\WorkbenchAnnotation[] $annotations */
   $annotations = WorkbenchAnnotation::loadMultiple($result);
 
-  /** @var \Drupal\workbench_annotation\Entity\WorkbenchAnnotation $annotation */
+  // Check if any annotation blocks the current transition.
   foreach ($annotations as $annotation) {
-    $severity_id = $annotation->get('severity')->getString();
+    $severity_id = $annotation->getSeverityId();
+    /** @var \Drupal\workbench_annotation\Entity\WorkbenchAnnotationSeverity $severity */
     $severity = WorkbenchAnnotationSeverity::load($severity_id);
     if ($severity) {
       foreach ($severity->get('blocked_moderation_transitions') as $transition) {

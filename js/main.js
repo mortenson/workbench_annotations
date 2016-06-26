@@ -9,7 +9,27 @@
 
   Annotator.Plugin.WorkbenchAnnotation = function (element, options) {
     this.entity_type = options.entity_type;
-    this.entity_id = options.entity_id;
+    this.entity_id = options.entity_id
+    this.severities = options.severities;
+    this.author_template = _.template(
+      '<div class="author-info">' +
+      '  <img class="author-image" src="<%- author_image %>" width="50" height="50"/>' +
+      '  <span class="author-name"><%- author_name %></span>' +
+      '</div>'
+    );
+    this.annotation_template = _.template(
+      '<div class="annotation-info">' +
+      '  <p class="created-date">Posted on <%- created %></p>' +
+      '  <p class="annotator-text"><%- text %></p>' +
+      '</div>'
+    );
+    this.severity_template = _.template(
+      '<select class="workbench-annotator-severity">' +
+      '  <% for(var i in severities) { %>' +
+      '  <option value="<%- i %>"><%- severities[i].label %></option>' +
+      '  <% } %>' +
+      '</select>'
+    );
   };
 
   $.extend(Annotator.Plugin.WorkbenchAnnotation.prototype, new Annotator.Plugin(), {
@@ -24,37 +44,22 @@
           annotation.entity_id = self.entity_id;
         })
         .subscribe('annotationViewerTextField', function (field, annotation) {
-          var quote = $(field).html();
-          $(field).html('');
-          $(field).addClass('workbench-annotator-annotation');
-          var $widget = $(field).closest('.annotator-widget');
+          var $field = $(field);
+          var $widget = $field.closest('.annotator-widget');
+          $field.html('').addClass('workbench-annotator-annotation');
           $widget.removeClass(function (index, css) {
             return (css.match (/(^|\s)severity-\S+/g) || []).join(' ');
           });
           if (annotation.severity) {
             $widget.addClass('severity-' + annotation.severity);
           }
-          $(field).append(
-            '<div class="author-info">' +
-            '  <img class="author-image" src="' + annotation.author_image + '" width="50" height="50"/>' +
-            '  <span class="author-name">' + annotation.author_name + '</span>' +
-            '</div>'
-          );
-          $(field).append(
-            '<div class="annotation-info">' +
-            '  <p class="created-date">Posted on ' + annotation.created + '</p>' +
-            '  <p class="annotator-quote">' + quote + '</p>' +
-            '</div>'
-          );
+          $field.append(self.author_template(annotation));
+          $field.append(self.annotation_template(annotation));
         })
         .subscribe('annotationEditorShown', function (editor, annotation) {
           var $element = editor.element;
           $element.once('workbench-annotator-form-extras').each(function () {
-            var $select = $('<select>').addClass('workbench-annotator-severity');
-            for (var id in drupalSettings.workbench_annotation.severities) {
-              var label = drupalSettings.workbench_annotation.severities[id].label;
-              $select.append('<option value="' + id + '">' + label + '</option>');
-            }
+            var $select = $(self.severity_template({severities: self.severities}));
             $element.find('.annotator-controls').prepend($select);
             if (annotation.severity) {
               $select.val(annotation.severity).change();
@@ -79,7 +84,8 @@
         var entity = $(this).data('workbench-annotation-entity-id').split('/');
         var options = {
           entity_type: entity[0],
-          entity_id: entity[1]
+          entity_id: entity[1],
+          severities: settings.workbench_annotation.severities
         };
         $(this).annotator()
           .annotator('addPlugin', 'Store', {

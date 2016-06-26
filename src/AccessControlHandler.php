@@ -17,15 +17,17 @@ class AccessControlHandler extends EntityAccessControlHandler {
   /**
    * {@inheritdoc}
    */
-  protected function checkAccess(EntityInterface $entity, $operation, AccountInterface $account) {
-    return AccessResult::allowed();
+  protected function checkAccess(WorkbenchAnnotationInterface $entity, $operation, AccountInterface $account) {
     switch ($operation) {
       case 'view':
-        return AccessResult::allowedIf($account->hasPermission('access workbench annotations'))->cachePerPermissions()->cachePerUser()->addCacheableDependency($entity);
+        return AccessResult::allowedIfHasPermission($account, 'access workbench annotations')
+          ->cachePerPermissions()->cachePerUser()->addCacheableDependency($entity);
 
       case 'update':
       case 'delete':
-        return AccessResult::allowedIf($account->id() && $account->id() == $entity->get('author')->target_id)->cachePerPermissions()->cachePerUser()->addCacheableDependency($entity);
+        return AccessResult::allowedIf($account->id() && $account->id() === $entity->getAuthor()->id())
+          ->orIf(AccessResult::allowedIfHasPermission($account, 'administer workbench annotations'))
+          ->cachePerPermissions()->cachePerUser()->addCacheableDependency($entity);
 
       default:
         // No opinion.

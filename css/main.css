@@ -1,40 +1,40 @@
-.workbench-annotator-annotation {
-
-}
-
-.workbench-annotator-annotation .author-info {
+/* Align our annotation content and user information side-by-side. */
+.workbench-annotator-annotation .author-info,
+.workbench-annotator-annotation .annotation-info{
   float: left;
   text-align: center;
 }
 
-.workbench-annotator-annotation .annotation-info {
-  float: left;
-  text-align: center;
-}
-
-.workbench-annotator-annotation .author-info .author-image,.author-name {
-  display: block;
-  text-align: center;
-}
-
+/* Give some space between the author information and the annotation content. */
 .workbench-annotator-annotation .author-info {
   margin-right: 10px;
 }
 
+/* Place the author image above the author name. */
+.workbench-annotator-annotation .author-info .author-image,
+.workbench-annotator-annotation .author-info .author-name {
+  display: block;
+  text-align: center;
+}
+
+/* Display the author image as a circle and increase the <img> margin. */
 .workbench-annotator-annotation .author-info .author-image {
   margin-bottom: 10px;
   border-radius: 50%;
 }
 
+/* Add space between the created date and the annotation text. */
 .workbench-annotator-annotation .created-date {
   margin-bottom: 5px;
 }
 
-.workbench-annotator-annotation .annotator-quote {
+/* Override AnnotatorJS's italic style for the annotation text. */
+.workbench-annotator-annotation .annotator-text {
   font-style: normal;
   color: #6b6b6b;
 }
 
+/* Theme our severity <select> element to match the normal Cancel/Save actions. */
 .workbench-annotator-severity {
   position: relative;
   display: inline-block;
@@ -48,6 +48,11 @@
   border: 1px solid #a2a2a2;
 }
 
+/* Add inherit styles for typical severity levels. */
 .annotator-widget.severity-important {
   background-color: rgb(255, 248, 175);
+}
+
+.annotator-widget.severity-critical {
+  background-color: rgb(255, 72, 63);
 }

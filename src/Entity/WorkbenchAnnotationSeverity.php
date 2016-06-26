@@ -44,7 +44,7 @@ class WorkbenchAnnotationSeverity extends ConfigEntityBase {
   protected $severity_level;
 
   /**
-   * The blocked moderation transitions.
+   * The blocked Workbench Moderation transitions.
    *
    * @var array
    */
