@@ -10,7 +10,8 @@ use Drupal\workbench_annotation\Entity\WorkbenchAnnotationSeverity;
  * Implements hook_page_attachments().
  */
 function workbench_annotation_page_attachments(array &$page) {
-  if (!\Drupal::currentUser()->hasPermission('access workbench annotations')
+  $user = \Drupal::currentUser();
+  if (!$user->hasPermission('access workbench annotations')
     || \Drupal::service('router.admin_context')->isAdminRoute()) {
     return;
   }
@@ -34,6 +35,7 @@ function workbench_annotation_page_attachments(array &$page) {
   }
   $page['#attached']['drupalSettings']['workbench_annotation'] = [
     'severities' => $options,
+    'can_create' => $user->hasPermission('create workbench annotations'),
   ];
 }
 

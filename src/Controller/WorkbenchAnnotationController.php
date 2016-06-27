@@ -190,16 +190,18 @@ class WorkbenchAnnotationController extends ControllerBase {
 
     $data = [
       'id' => $workbench_annotation->id(),
-      'author_image' => $workbench_annotation->getAuthorImageUrl(),
-      'author_name' => $workbench_annotation->getAuthorName(),
       'created' => $created,
       'quote' => $workbench_annotation->getQuote(),
       'ranges' => $workbench_annotation->getRanges(),
       'text' => $workbench_annotation->getText(),
+      // These variables are unique to the Workbench Annotation module, and
+      // aren't used by AnnotatorJS. "from_drupal" is used to prevent errors
+      // when viewing annotations created locally or from other sources.
+      'from_drupal' => TRUE,
+      'author_image' => $workbench_annotation->getAuthorImageUrl(),
+      'author_name' => $workbench_annotation->getAuthorName(),
       'severity' => $workbench_annotation->getSeverityId(),
       'access' => [
-        'create' => $workbench_annotation->access('create'),
-        'view' => $workbench_annotation->access('view'),
         'update' => $workbench_annotation->access('update'),
         'delete' => $workbench_annotation->access('delete'),
       ]

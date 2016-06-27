@@ -23,7 +23,6 @@ use Drupal\workbench_annotation\WorkbenchAnnotationInterface;
  *   fieldable = FALSE,
  *   entity_keys = {
  *     "id" = "id",
- *     "label" = "id",
  *     "uuid" = "uuid"
  *   },
  * )

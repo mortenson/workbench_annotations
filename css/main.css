@@ -1,7 +1,14 @@
+/* Increase min-width of the annotation to account for our extra author info. */
+.annotator-widget.workbench-annotator-annotation {
+  min-width: 300px;
+}
+
 /* Align our annotation content and user information side-by-side. */
 .workbench-annotator-annotation .author-info,
 .workbench-annotator-annotation .annotation-info{
-  float: left;
+  display: inline-block;
+  border: 0;
+  vertical-align: top;
   text-align: center;
 }
 
@@ -55,4 +62,17 @@
 
 .annotator-widget.severity-critical {
   background-color: rgb(255, 72, 63);
+}
+
+/* Hide the annotation button for users who have no access. */
+.workbench-annotation-hide-adder .annotator-adder {
+  display: none !important;
+}
+
+/* Style our special annotation element to match normal annotations. */
+.workbench-annotator-outdated {
+  background: #fff8af;
+  padding: 5px;
+  font-family: sans-serif;
+  border: 1px dashed #c3b200;
 }
