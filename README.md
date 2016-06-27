@@ -15,7 +15,7 @@ Installation
 ------------
 
 1. Download https://github.com/openannotation/annotator/releases/download/v1.2.10/annotator-full.1.2.10.zip and extract
-the contents to <drupal root>/libraries/annotator
+the contents to [drupal_root]/libraries/annotator
 2. Download/enable workbench_moderation
 3. Enable workbench_annotation
 4. Start annotating!
