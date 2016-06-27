@@ -14,8 +14,8 @@ More details to follow after the module gets an official Drupal.org Project page
 Installation
 ------------
 
-1) Download https://github.com/openannotation/annotator/releases/download/v1.2.10/annotator-full.1.2.10.zip and extract
+1. Download https://github.com/openannotation/annotator/releases/download/v1.2.10/annotator-full.1.2.10.zip and extract
 the contents to <drupal root>/libraries/annotator
-2) Download/enable workbench_moderation
-3) Enable workbench_annotation
-4) Start annotating!
+2. Download/enable workbench_moderation
+3. Enable workbench_annotation
+4. Start annotating!
