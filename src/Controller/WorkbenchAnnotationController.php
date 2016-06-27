@@ -186,7 +186,7 @@ class WorkbenchAnnotationController extends ControllerBase {
    *   An associative array containing keys that AnnotatorJS can parse.
    */
   protected function getAnnotatorJSData(WorkbenchAnnotationInterface $workbench_annotation) {
-    $created = date('F jS, Y', $workbench_annotation->get('created')->getString());
+    $created = date('F jS, Y', $workbench_annotation->getCreatedTime());
 
     $data = [
       'id' => $workbench_annotation->id(),
