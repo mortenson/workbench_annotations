@@ -3,9 +3,58 @@
   min-width: 300px;
 }
 
+/* Remove resize element. */
+.annotator-widget .annotator-resize {
+  display: none;
+}
+
+/* Use a CSS triangle for the annotator pop-up. */
+.annotator-widget::after, .annotator-widget::before {
+  content: "";
+  display: block;
+  height: inherit;
+  width: inherit;
+  position: absolute;
+  left: 8px;
+  background-image: none;
+  border-style: solid;
+}
+
+.annotator-invert-y .annotator-widget::after {
+  bottom: inherit;
+  top: -20px;
+  border-top-color: transparent;
+  border-bottom-color: #FFFFFF;
+}
+
+.annotator-widget::after {
+  bottom: -20px;
+  border-top-color: #FFFFFF;
+  border-bottom-color: transparent;
+  border-right-color: transparent;
+  border-left-color: transparent;
+  border-width: 10px;
+}
+
+.annotator-invert-y .annotator-widget::before {
+  bottom: inherit;
+  top: -21px;
+  border-top-color: transparent;
+  border-bottom-color: rgba(122,122,122,0.6);
+}
+
+.annotator-widget::before {
+  bottom: -21px;
+  border-top-color: rgba(122,122,122,0.6);
+  border-bottom-color: transparent;
+  border-right-color: transparent;
+  border-left-color: transparent;
+  border-width: 10px;
+}
+
 /* Align our annotation content and user information side-by-side. */
 .workbench-annotator-annotation .author-info,
-.workbench-annotator-annotation .annotation-info{
+.workbench-annotator-annotation .annotation-info {
   display: inline-block;
   border: 0;
   vertical-align: top;
@@ -14,6 +63,8 @@
 
 /* Give some space between the author information and the annotation content. */
 .workbench-annotator-annotation .author-info {
+  position: relative;
+  background: transparent;
   margin-right: 10px;
 }
 
@@ -22,6 +73,13 @@
 .workbench-annotator-annotation .author-info .author-name {
   display: block;
   text-align: center;
+}
+
+.workbench-annotator-annotation .author-info .author-name {
+  text-transform: capitalize;
+  color: black;
+  font-style: normal;
+  font-size: 12px;
 }
 
 /* Display the author image as a circle and increase the <img> margin. */
@@ -33,18 +91,21 @@
 /* Add space between the created date and the annotation text. */
 .workbench-annotator-annotation .created-date {
   margin-bottom: 5px;
+  color: #6b6b6b;
 }
 
 /* Override AnnotatorJS's italic style for the annotation text. */
 .workbench-annotator-annotation .annotator-text {
   font-style: normal;
-  color: #6b6b6b;
+  color: black;
 }
 
 /* Theme our severity <select> element to match the normal Cancel/Save actions. */
 .workbench-annotator-severity {
   position: relative;
   display: inline-block;
+  padding: 0 6px 0 6px;
+  width: inherit;
   height: 26px;
   color: #363636;
   text-shadow: 0 1px 0 rgba(255,255,255,0.75);
@@ -53,15 +114,34 @@
   font-size: 12px;
   font-weight: bold;
   border: 1px solid #a2a2a2;
+  background-color: #d4d4d4;
+  background-image: -webkit-gradient(linear,left top,left bottom,from(#f5f5f5),color-stop(0.5,#d2d2d2),color-stop(0.5,#bebebe),to(#d2d2d2));
+  background-image: -moz-linear-gradient(to bottom,#f5f5f5,#d2d2d2 50%,#bebebe 50%,#d2d2d2);
+  background-image: -webkit-linear-gradient(to bottom,#f5f5f5,#d2d2d2 50%,#bebebe 50%,#d2d2d2);
+  background-image: linear-gradient(to bottom,#f5f5f5,#d2d2d2 50%,#bebebe 50%,#d2d2d2);
+  -webkit-box-shadow: inset 0 0 5px rgba(255,255,255,0.2),inset 0 0 1px rgba(255,255,255,0.8);
+  -moz-box-shadow: inset 0 0 5px rgba(255,255,255,0.2),inset 0 0 1px rgba(255,255,255,0.8);
+  -o-box-shadow: inset 0 0 5px rgba(255,255,255,0.2),inset 0 0 1px rgba(255,255,255,0.8);
+  box-shadow: inset 0 0 5px rgba(255,255,255,0.2),inset 0 0 1px rgba(255,255,255,0.8);
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  -o-border-radius: 5px;
+  border-radius: 5px;
 }
 
-/* Add inherit styles for typical severity levels. */
+/* Add inherit styles for our default severity level. */
 .annotator-widget.severity-important {
   background-color: rgb(255, 248, 175);
 }
 
-.annotator-widget.severity-critical {
-  background-color: rgb(255, 72, 63);
+.annotator-invert-y .annotator-widget.severity-important::after {
+  border-bottom-color: rgb(255, 248, 175);
+  border-top-color: transparent;
+}
+
+.annotator-widget.severity-important::after {
+  border-top-color: rgb(255, 248, 175);
+  border-bottom-color: transparent;
 }
 
 /* Hide the annotation button for users who have no access. */
