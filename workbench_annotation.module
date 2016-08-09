@@ -1,9 +1,8 @@
 <?php
 
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
-use Drupal\workbench_annotation\Entity\WorkbenchAnnotation;
-use Drupal\Core\Form\FormStateInterface;
 use Drupal\workbench_annotation\Entity\WorkbenchAnnotationSeverity;
 
 /**
@@ -11,6 +10,7 @@ use Drupal\workbench_annotation\Entity\WorkbenchAnnotationSeverity;
  */
 function workbench_annotation_page_attachments(array &$page) {
   $user = \Drupal::currentUser();
+
   if (!$user->hasPermission('access workbench annotations')
     || \Drupal::service('router.admin_context')->isAdminRoute()) {
     return;
@@ -73,80 +73,13 @@ function _workbench_annotation_access(EntityInterface $entity) {
 }
 
 /**
- * Adds a custom validation callback for Nodes that are moderated, so that we
- * can block Workbench transitions.
- *
- * @param array $form
- *   The form array.
- * @param \Drupal\Core\Form\FormStateInterface $form_state
- *   The form state.
+ * Implements hook_annotation_entity_bundle_field_info_alter().
  */
-function workbench_annotation_form_node_form_alter(&$form, FormStateInterface $form_state) {
+function workbench_annotation_entity_bundle_field_info_alter(&$fields, EntityTypeInterface $entity_type, $bundle) {
+  /** @var \Drupal\workbench_moderation\ModerationInformation $workbench_information */
   $workbench_information = \Drupal::service('workbench_moderation.moderation_information');
 
-  if ($workbench_information->isModeratedEntityForm($form_state->getFormObject())) {
-    /* @var \Drupal\Core\Entity\ContentEntityInterface $entity */
-    $entity = $form_state->getFormObject()->getEntity();
-    if (_workbench_annotation_access($entity)) {
-      $form['#validate'][] = 'workbench_annotation_node_form_validate';
-    }
+  if ($workbench_information->isModeratableBundle($entity_type, $bundle) && !empty($fields['moderation_state'])) {
+    $fields['moderation_state']->addConstraint('ModerationAnnotation', []);
   }
-}
-
-/**
- * Validation callback for moderated Node forms. Checks if there are any
- * annotations that block the current Workbench transition, and stops the form
- * submit if so.
- *
- * @param array $form
- *   The form array.
- * @param \Drupal\Core\Form\FormStateInterface $form_state
- *  The form state.
- */
-function workbench_annotation_node_form_validate(&$form, FormStateInterface $form_state) {
-  /** @var \Drupal\Core\Entity\ContentEntityInterface $entity */
-  $entity = $form_state->getFormObject()->getEntity();
-  $element = $form_state->getTriggeringElement();
-
-  /** @var \Drupal\workbench_moderation\StateTransitionValidation $transition_validation */
-  $transition_validation = \Drupal::service('workbench_moderation.state_transition_validation');
-  $transitions = $transition_validation->getValidTransitions($entity, \Drupal::currentUser());
-
-  // Determine the current transition object based on the from and to states.
-  $from_state = $entity->moderation_state->entity->id();
-  $to_state = $element['#moderation_state'];
-  $current_transition = FALSE;
-  foreach ($transitions as $transition) {
-    if ($transition->getToState() == $to_state && $transition->getFromState() == $from_state) {
-      $current_transition = $transition;
-    }
-  }
-
-  // Something went wrong, return early before running into errors.
-  if (!$current_transition) {
-    return;
-  }
-
-  // Load all annotations associated with this Entity.
-  $result = \Drupal::entityQuery('workbench_annotation')
-    ->condition('entity_type', $entity->getEntityTypeId())
-    ->condition('entity_id', $entity->id())
-    ->execute();
-  /** @var \Drupal\workbench_annotation\Entity\WorkbenchAnnotation[] $annotations */
-  $annotations = WorkbenchAnnotation::loadMultiple($result);
-
-  // Check if any annotation blocks the current transition.
-  foreach ($annotations as $annotation) {
-    $severity_id = $annotation->getSeverityId();
-    /** @var \Drupal\workbench_annotation\Entity\WorkbenchAnnotationSeverity $severity */
-    $severity = WorkbenchAnnotationSeverity::load($severity_id);
-    if ($severity) {
-      foreach ($severity->get('blocked_moderation_transitions') as $transition) {
-        if ($current_transition->id() == $transition) {
-          $form_state->setErrorByName('blocked_moderation_transition', t('You cannot @label until you resolve all important annotations.', ['@label' => $current_transition->label()]));
-        }
-      }
-    }
-  }
-
 }
