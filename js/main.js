@@ -121,7 +121,7 @@
           // outdated annotations. Without this, annotations would grow stale
           // and could never be deleted.
           if (self.outdated_annotations.length) {
-            var text = Drupal.t('Hover to view outdated annotations.');
+            var text = Drupal.t('This entity has outdated annotations. Hover here to review them.');
             $(this).once('workbench-annotator-outdated').each(function () {
               var $element = $('<p class="workbench-annotator-outdated"><span>' + text + '</span></p>');
               var $wrapper = $(this).find('.annotator-wrapper');
