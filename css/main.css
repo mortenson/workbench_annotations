@@ -61,9 +61,14 @@
   text-align: center;
 }
 
+.workbench-annotator-annotation .annotation-info {
+  width: calc(80% - 24px);
+}
+
 /* Give some space between the author information and the annotation content. */
 .workbench-annotator-annotation .author-info {
-  width: 20%;
+  width: calc(20% - 10px);
+  float: left;
   overflow: hidden;
   position: relative;
   margin-right: 10px;
@@ -88,7 +93,6 @@
 .workbench-annotator-annotation .author-info .author-image {
   margin-bottom: 10px;
   background: white;
-  border-radius: 50%;
   border: 1px solid transparent;
   box-shadow: 1px 1px 15px rgba(0, 0, 0, 0.2);
 }
