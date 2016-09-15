@@ -73,7 +73,7 @@ function _workbench_annotation_access(EntityInterface $entity) {
 }
 
 /**
- * Implements hook_annotation_entity_bundle_field_info_alter().
+ * Implements hook_entity_bundle_field_info_alter().
  */
 function workbench_annotation_entity_bundle_field_info_alter(&$fields, EntityTypeInterface $entity_type, $bundle) {
   /** @var \Drupal\workbench_moderation\ModerationInformation $workbench_information */
